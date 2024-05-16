@@ -1,0 +1,5 @@
+name "sievecache"
+description "A SIEVE Cache implementation in D"
+authors "Hiroki Noda"
+copyright "Copyright © 2024 Hiroki Noda"
+license "MIT"

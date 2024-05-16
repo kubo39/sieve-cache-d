@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - "*.md"
+      - ".gitignore"
+      - "LICENSE"
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "*.md"
+      - ".gitignore"
+      - "LICENSE"
+
+jobs:
+  lint:
+    name: Run `dub lint`
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dlang-community/setup-dlang@v1
+      - name: Run lint
+        run: dub lint
+
+  test:
+    name: Run `dub test`
+    strategy:
+      matrix:
+        dc: [dmd-latest, ldc-latest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+      - name: Run test
+        run: dub test

@@ -1,0 +1,5 @@
+*.a
+*-test-library
+docs.json
+/docs/
+dub.selections.json
