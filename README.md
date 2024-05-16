@@ -3,6 +3,8 @@
 An implementation of the [SIEVE][1] Cache algorithm for D.
 This implementation is fully inspired by [Rust's sieve-cache implementation][2].
 
+- [`code.dlang.org` page][3]
+
 ## Run tests
 
 ```console
@@ -23,3 +25,4 @@ dub run -b ddox
 
 [1]: https://cachemon.github.io/SIEVE-website/
 [2]: https://github.com/jedisct1/rust-sieve-cache
+[3]: https://code.dlang.org/packages/sievecache
