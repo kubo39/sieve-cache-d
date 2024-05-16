@@ -12,6 +12,7 @@ module sievecache;
 
 private:
 
+import core.atomic;
 import std.exception : enforce;
 import std.traits : isEqualityComparable, isSomeFunction, isTypeTuple;
 
@@ -43,12 +44,24 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         return capacity_;
     }
 
+    /// Ditto.
+    size_t capacity() shared const @nogc nothrow
+    {
+        return capacity_;
+    }
+
     /**
      * Returns the length of the cache.
      */
     size_t length() const @nogc nothrow pure
     {
         return length_;
+    }
+
+    /// Ditto.
+    size_t length() shared const @nogc nothrow
+    {
+        return length_.atomicLoad;
     }
 
     /**
@@ -59,6 +72,12 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         return length_ == 0;
     }
 
+    /// Ditto.
+    bool empty() shared const @nogc nothrow
+    {
+        return length_.atomicLoad == 0;
+    }
+
     /**
      * Returns `true` if there is a value in the cache mapped to
      * by `key`.
@@ -66,6 +85,15 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     bool contains(K key) const @nogc nothrow pure
     {
         return (key in aa_) !is null;
+    }
+
+    /// Ditto.
+    bool contains(K key) shared const @nogc nothrow
+    {
+        synchronized
+        {
+            return (key in aa_) !is null;
+        }
     }
 
     /**
@@ -82,6 +110,21 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         }
         (*nodePtr).visited = true;
         return &(*nodePtr).value;
+    }
+
+    /// Ditto.
+    scope shared(V)* get(K key) shared @nogc nothrow
+    {
+        synchronized
+        {
+            auto nodePtr = key in aa_;
+            if (nodePtr is null)
+            {
+                return null;
+            }
+            (*nodePtr).visited = true;
+            return &(*nodePtr).value;
+        }
     }
 
     /**
@@ -109,6 +152,30 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         return true;
     }
 
+    /// Ditto.
+    bool insert(K key, V value) shared
+    {
+        synchronized
+        {
+            auto nodePtr = key in aa_;
+            if (nodePtr !is null)
+            {
+                (**nodePtr).value = value;
+                return false;
+            }
+            if (length_ >= capacity_)
+            {
+                evict();
+            }
+            auto node = new shared Node!(K, V)(key, value);
+            addNode(node);
+            aa_[key] = node;
+            assert(length_ < capacity_);
+            length_.atomicOp!"+="(1);
+        }
+        return true;
+    }
+
     /**
      * Removes the cache entry mapped to by `key`.
      * Returns `true` and removes it from the cache if the given key
@@ -129,6 +196,24 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         return aa_.remove(key);
     }
 
+    /// Ditto.
+    bool remove(K key) shared @nogc nothrow
+    {
+        synchronized
+        {
+            auto nodePtr = key in aa_;
+            if (nodePtr is null)
+            {
+                return false;
+            }
+            auto node = *nodePtr;
+            removeNode(node);
+            assert(length_ > 0);
+            length_.atomicOp!("-=")(1);
+            return aa_.remove(key);
+        }
+    }
+
 private:
     void addNode(Node!(K, V)* node) @nogc nothrow pure
     {
@@ -142,6 +227,24 @@ private:
         if (tail_ is null)
         {
             tail_ = head_;
+        }
+    }
+
+    void addNode(shared Node!(K, V)* node) shared @nogc nothrow
+    {
+        synchronized
+        {
+            node.next = head_;
+            node.prev = null;
+            if (head_ !is null)
+            {
+                head_.prev = node;
+            }
+            head_ = node;
+            if (tail_ is null)
+            {
+                tail_ = head_;
+            }
         }
     }
 
@@ -163,6 +266,30 @@ private:
         else
         {
             tail_ = node.prev;
+        }
+    }
+
+    void removeNode(shared Node!(K, V)* node) shared @nogc nothrow
+    {
+        synchronized
+        {
+            if (node.prev !is null)
+            {
+                node.prev.next = node.next;
+            }
+            else
+            {
+                head_ = node.next;
+            }
+
+            if (node.next !is null)
+            {
+                node.next.prev = node.prev;
+            }
+            else
+            {
+                tail_ = node.prev;
+            }
         }
     }
 
@@ -204,11 +331,52 @@ private:
         }
     }
 
+    void evict() shared @nogc nothrow
+    {
+        synchronized
+        {
+            shared Node!(K, V)* node = null;
+            if (hand_ !is null)
+            {
+                node = hand_;
+            }
+            else if (tail_ !is null)
+            {
+                node = tail_;
+            }
+            while (node !is null)
+            {
+                if (!node.visited)
+                {
+                    break;
+                }
+                node.visited = false;
+                if (node.prev !is null)
+                {
+                    node = node.prev;
+                }
+                else
+                {
+                    node = tail_;
+                }
+            }
+
+            if (node !is null)
+            {
+                hand_ = node.prev;
+                aa_.remove(node.key);
+                removeNode(node);
+                assert(length_ > 0);
+                length_.atomicOp!("-=")(1);
+            }
+        }
+    }
+
     Node!(K, V)*[K] aa_;
     Node!(K, V)* head_;
     Node!(K, V)* tail_;
     Node!(K, V)* hand_;
-    size_t capacity_;
+    immutable size_t capacity_;
     size_t length_;
 
     struct Node(K, V)
@@ -225,13 +393,36 @@ private:
 unittest
 {
     auto cache = SieveCache!(string, string)(3);
+    assert(cache.capacity == 3);
+    assert(cache.empty());
     cache.insert("foo", "foocontent");
     cache.insert("bar", "barcontent");
     assert(cache.remove("bar"));
     cache.insert("bar2", "bar2content");
     cache.insert("bar3", "bar3content");
     assert(*cache.get("foo") == "foocontent");
+    assert(cache.contains("foo"));
     assert(cache.get("bar") is null);
     assert(*cache.get("bar2") == "bar2content");
     assert(*cache.get("bar3") == "bar3content");
+    assert(cache.length == 3);
+}
+
+@("smoke test for shared")
+unittest
+{
+    auto cache = shared SieveCache!(string, string)(3);
+    assert(cache.capacity == 3);
+    assert(cache.empty());
+    cache.insert("foo", "foocontent");
+    cache.insert("bar", "barcontent");
+    assert(cache.remove("bar"));
+    cache.insert("bar2", "bar2content");
+    cache.insert("bar3", "bar3content");
+    assert(*cache.get("foo") == "foocontent");
+    assert(cache.contains("foo"));
+    assert(cache.get("bar") is null);
+    assert(*cache.get("bar2") == "bar2content");
+    assert(*cache.get("bar3") == "bar3content");
+    assert(cache.length == 3);
 }
