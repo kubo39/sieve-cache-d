@@ -115,8 +115,9 @@ struct SieveCache(K, V)
 
     /**
      * Removes the cache entry mapped to by `key`.
-     * Returns the value remove from the cache. If `key` did not map to
-     * any value, then this returns `null`.
+     * Returns `true` and removes it from the cache if the given key
+     * does exist.
+     * If `key` did not map to any value, then this returns `false`.
      */
     bool remove(K key) @nogc nothrow pure
     {
