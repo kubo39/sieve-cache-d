@@ -232,19 +232,16 @@ private:
 
     void addNode(shared Node!(K, V)* node) shared @nogc nothrow
     {
-        synchronized
+        node.next = head_;
+        node.prev = null;
+        if (head_ !is null)
         {
-            node.next = head_;
-            node.prev = null;
-            if (head_ !is null)
-            {
-                head_.prev = node;
-            }
-            head_ = node;
-            if (tail_ is null)
-            {
-                tail_ = head_;
-            }
+            head_.prev = node;
+        }
+        head_ = node;
+        if (tail_ is null)
+        {
+            tail_ = head_;
         }
     }
 
@@ -271,25 +268,22 @@ private:
 
     void removeNode(shared Node!(K, V)* node) shared @nogc nothrow
     {
-        synchronized
+        if (node.prev !is null)
         {
-            if (node.prev !is null)
-            {
-                node.prev.next = node.next;
-            }
-            else
-            {
-                head_ = node.next;
-            }
+            node.prev.next = node.next;
+        }
+        else
+        {
+            head_ = node.next;
+        }
 
-            if (node.next !is null)
-            {
-                node.next.prev = node.prev;
-            }
-            else
-            {
-                tail_ = node.prev;
-            }
+        if (node.next !is null)
+        {
+            node.next.prev = node.prev;
+        }
+        else
+        {
+            tail_ = node.prev;
         }
     }
 
@@ -333,42 +327,39 @@ private:
 
     void evict() shared @nogc nothrow
     {
-        synchronized
+        shared Node!(K, V)* node = null;
+        if (hand_ !is null)
         {
-            shared Node!(K, V)* node = null;
-            if (hand_ !is null)
+            node = hand_;
+        }
+        else if (tail_ !is null)
+        {
+            node = tail_;
+        }
+        while (node !is null)
+        {
+            if (!node.visited)
             {
-                node = hand_;
+                break;
             }
-            else if (tail_ !is null)
+            node.visited = false;
+            if (node.prev !is null)
+            {
+                node = node.prev;
+            }
+            else
             {
                 node = tail_;
             }
-            while (node !is null)
-            {
-                if (!node.visited)
-                {
-                    break;
-                }
-                node.visited = false;
-                if (node.prev !is null)
-                {
-                    node = node.prev;
-                }
-                else
-                {
-                    node = tail_;
-                }
-            }
+        }
 
-            if (node !is null)
-            {
-                hand_ = node.prev;
-                aa_.remove(node.key);
-                removeNode(node);
-                assert(length_ > 0);
-                length_.atomicOp!("-=")(1);
-            }
+        if (node !is null)
+        {
+            hand_ = node.prev;
+            aa_.remove(node.key);
+            removeNode(node);
+            assert(length_ > 0);
+            length_.atomicOp!("-=")(1);
         }
     }
 
