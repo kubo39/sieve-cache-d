@@ -175,7 +175,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             addNode(node);
             aa_[key] = node;
             assert(length_ < capacity_);
-            length_.atomicOp!"+="(1);
+            (cast() length_)++;
         }
         return true;
     }
@@ -363,7 +363,7 @@ private:
             aa_.remove(node.key);
             removeNode(node);
             assert(length_ > 0);
-            length_.atomicOp!("-=")(1);
+            (cast() length_)--;
         }
     }
 
