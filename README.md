@@ -15,7 +15,7 @@ dub test
 dub lint
 ```
 
-## Build the docment
+## Serve the docmentation on a local server
 
 ```console
 dub run -b ddox
