@@ -16,7 +16,7 @@ import std.exception : enforce;
 import std.traits : isEqualityComparable, isSomeFunction, isTypeTuple;
 
 // https://github.com/dlang/dmd/blob/5b5fba8b6af4a3b66f1cf0c2157a69305094ff27/compiler/src/dmd/typesem.d#L1598-L1605
-enum bool isHashable(T) =
+enum bool isKeyableType(T) =
     !(is(isSomeFunction!T)
         || is(T == void)
         || is(isTypeTuple!T));
@@ -27,7 +27,7 @@ public:
  * A cache based on the SIEVE eviction algorithm.
  */
 struct SieveCache(K, V)
-    if (isEqualityComparable!K && isHashable!K)
+    if (isEqualityComparable!K && isKeyableType!K)
 {
     /**
      * Create a new cache with given capacity.
