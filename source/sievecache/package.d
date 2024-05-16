@@ -36,6 +36,10 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         length_ = 0;
     }
 
+    @disable this();
+
+    @disable this(this);
+
     /**
      * Returns the capacity of the cache.
      */
