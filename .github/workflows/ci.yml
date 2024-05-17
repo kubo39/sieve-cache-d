@@ -4,6 +4,7 @@ on:
   pull_request:
     paths-ignore:
       - "*.md"
+      - ".editorconfig"
       - ".gitignore"
       - "LICENSE"
   push:
@@ -11,6 +12,7 @@ on:
       - "main"
     paths-ignore:
       - "*.md"
+      - ".editorconfig"
       - ".gitignore"
       - "LICENSE"
 
