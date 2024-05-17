@@ -12,7 +12,7 @@ module sievecache;
 
 private:
 
-import core.atomic;
+import core.atomic : atomicLoad;
 import std.exception : enforce;
 import std.traits : isEqualityComparable, isSomeFunction, isTypeTuple;
 
@@ -213,7 +213,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             auto node = *nodePtr;
             removeNode(node);
             assert(length_ > 0);
-            length_.atomicOp!("-=")(1);
+            (cast() length_)--;
             return aa_.remove(key);
         }
     }
