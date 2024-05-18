@@ -218,6 +218,31 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         }
     }
 
+    /**
+     * Removes all remining keys and values from the cache.
+     */
+    void clear() nothrow pure
+    {
+        aa_.clear;
+        head_ = null;
+        tail_ = null;
+        hand_ = null;
+        length_ = 0;
+    }
+
+    /// Ditto.
+    void clear() @trusted shared nothrow
+    {
+        synchronized
+        {
+            (cast() aa_).clear;
+            head_ = null;
+            tail_ = null;
+            hand_ = null;
+            length_ = 0;
+        }
+    }
+
 private:
     void addNode(Node!(K, V)* node) @nogc nothrow pure
     {
@@ -390,17 +415,20 @@ unittest
     auto cache = SieveCache!(string, string)(3);
     assert(cache.capacity == 3);
     assert(cache.empty());
-    cache.insert("foo", "foocontent");
-    cache.insert("bar", "barcontent");
+    assert(cache.insert("foo", "foocontent"));
+    assert(cache.insert("bar", "barcontent"));
     assert(cache.remove("bar"));
-    cache.insert("bar2", "bar2content");
-    cache.insert("bar3", "bar3content");
+    assert(cache.insert("bar2", "bar2content"));
+    assert(cache.insert("bar3", "bar3content"));
     assert(*cache.get("foo") == "foocontent");
     assert(cache.contains("foo"));
     assert(cache.get("bar") is null);
     assert(*cache.get("bar2") == "bar2content");
     assert(*cache.get("bar3") == "bar3content");
     assert(cache.length == 3);
+    cache.clear();
+    assert(cache.length == 0);
+    assert(!cache.contains("foo"));
 }
 
 @("smoke test for shared")
@@ -409,15 +437,18 @@ unittest
     auto cache = shared SieveCache!(string, string)(3);
     assert(cache.capacity == 3);
     assert(cache.empty());
-    cache.insert("foo", "foocontent");
-    cache.insert("bar", "barcontent");
+    assert(cache.insert("foo", "foocontent"));
+    assert(cache.insert("bar", "barcontent"));
     assert(cache.remove("bar"));
-    cache.insert("bar2", "bar2content");
-    cache.insert("bar3", "bar3content");
+    assert(cache.insert("bar2", "bar2content"));
+    assert(cache.insert("bar3", "bar3content"));
     assert(*cache.get("foo") == "foocontent");
     assert(cache.contains("foo"));
     assert(cache.get("bar") is null);
     assert(*cache.get("bar2") == "bar2content");
     assert(*cache.get("bar3") == "bar3content");
     assert(cache.length == 3);
+    cache.clear();
+    assert(cache.length == 0);
+    assert(!cache.contains("foo"));
 }
