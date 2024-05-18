@@ -454,3 +454,16 @@ unittest
     assert(cache.length == 0);
     assert(!cache.contains("foo"));
 }
+
+@("test for update visited flag")
+unittest
+{
+    auto cache = SieveCache!(string, string)(2);
+    cache.insert("key1", "value1");
+    cache.insert("key2", "value2");
+    // update key1 entry.
+    cache.insert("key1", "updated");
+    // add new entry
+    cache.insert("key3", "value3");
+    assert(cache.contains("key1"));
+}
