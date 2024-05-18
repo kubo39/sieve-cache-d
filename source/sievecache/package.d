@@ -138,6 +138,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         if (nodePtr !is null)
         {
             (**nodePtr).value = value;
+            (**nodePtr).visited = true;
             return false;
         }
         if (length_ >= capacity_)
@@ -161,6 +162,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             if (nodePtr !is null)
             {
                 (**nodePtr).value = value;
+                (**nodePtr).visited = true;
                 return false;
             }
             if (length_ >= capacity_)
