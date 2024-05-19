@@ -192,6 +192,10 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             return false;
         }
         Node!(K, V)* node = *nodePtr;
+        if (node is hand_)
+        {
+            hand_ = node.prev;
+        }
         removeNode(node);
         assert(length_ > 0);
         length_--;
@@ -209,6 +213,10 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
                 return false;
             }
             auto node = *nodePtr;
+            if (node is hand_)
+            {
+                hand_ = node.prev;
+            }
             removeNode(node);
             assert(length_ > 0);
             (cast() length_)--;
@@ -295,6 +303,9 @@ private:
         {
             tail_ = node.prev;
         }
+        node.prev = null;
+        node.next = null;
+        assert(node !is hand_);
     }
 
     void removeNode(shared Node!(K, V)* node) shared @nogc nothrow
@@ -316,6 +327,9 @@ private:
         {
             tail_ = node.prev;
         }
+        node.prev = null;
+        node.next = null;
+        assert(node !is hand_);
     }
 
     void evict() @nogc nothrow pure
