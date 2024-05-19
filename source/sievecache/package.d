@@ -194,7 +194,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         Node!(K, V)* node = *nodePtr;
         if (node is hand_)
         {
-            hand_ = node.prev;
+            hand_ = node.prev !is null ? node.prev : tail_;
         }
         removeNode(node);
         assert(length_ > 0);
@@ -215,7 +215,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             auto node = *nodePtr;
             if (node is hand_)
             {
-                hand_ = node.prev;
+                hand_ = node.prev !is null ? node.prev : tail_;
             }
             removeNode(node);
             assert(length_ > 0);
