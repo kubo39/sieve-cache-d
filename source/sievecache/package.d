@@ -45,7 +45,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    size_t capacity() shared const @nogc nothrow
+    size_t capacity() shared const @nogc nothrow pure
     {
         return capacity_;
     }
@@ -59,7 +59,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    size_t length() shared const @nogc nothrow
+    size_t length() shared const @nogc nothrow pure
     {
         return length_.atomicLoad;
     }
@@ -73,7 +73,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    bool empty() shared const @nogc nothrow
+    bool empty() shared const @nogc nothrow pure
     {
         return length_.atomicLoad == 0;
     }
@@ -269,7 +269,7 @@ private:
         }
     }
 
-    void addNode(shared Node!(K, V)* node) shared @nogc nothrow
+    void addNode(shared Node!(K, V)* node) shared @nogc nothrow pure
     {
         node.next = head_;
         node.prev = null;
@@ -308,7 +308,7 @@ private:
         assert(node !is hand_);
     }
 
-    void removeNode(shared Node!(K, V)* node) shared @nogc nothrow
+    void removeNode(shared Node!(K, V)* node) shared @nogc nothrow pure
     {
         if (node.prev !is null)
         {
@@ -370,7 +370,7 @@ private:
         }
     }
 
-    void evict() shared @nogc nothrow
+    void evict() shared @nogc nothrow pure
     {
         shared Node!(K, V)* node = null;
         if (hand_ !is null)
