@@ -154,7 +154,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    bool insert(K key, V value) shared
+    bool insert(K key, shared V value) shared
     {
         synchronized
         {
