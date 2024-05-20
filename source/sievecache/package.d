@@ -79,6 +79,20 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /**
+     * Supports $(B key in aa) syntax.
+     */
+    scope V* opBinaryRight(string op)(K key) nothrow pure if (op == "in")
+    {
+        return get(key);
+    }
+
+    /// Ditto.
+    scope shared(V)* opBinaryRight(string op)(K key) shared if (op == "in")
+    {
+        return get(key);
+    }
+
+    /**
      * Returns `true` if there is a value in the cache mapped to
      * by `key`.
      */
@@ -94,6 +108,28 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
         {
             return (key in aa_) !is null;
         }
+    }
+
+    /**
+     * Supports `aa[key]` syntax.
+     */
+    ref opIndex(K key) pure
+    {
+        import std.conv : text;
+
+        const p = get(key);
+        enforce(p !is null, "'" ~ text(key) ~ "' not found in the cache.");
+        return *p;
+    }
+
+    /// Ditto.
+    ref opIndex(K key) shared
+    {
+        import std.conv : text;
+
+        const p = get(key);
+        enforce(p !is null, "'" ~ text(key) ~ "' not found in the cache.");
+        return *p;
     }
 
     /**
@@ -125,6 +161,20 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             (*nodePtr).visited = true;
             return &(*nodePtr).value;
         }
+    }
+
+    /**
+     * Supports $(B aa[key] = value;) syntax.
+     */
+    void opIndexAssign(V value, K key) nothrow pure
+    {
+        insert(key, value);
+    }
+
+    /// Ditto.
+    void opIndexAssign(shared V value, K key) shared
+    {
+        insert(key, value);
     }
 
     /**
@@ -428,19 +478,22 @@ private:
 @("smoke test")
 unittest
 {
+    import std.exception;
+
     auto cache = SieveCache!(string, string)(3);
     assert(cache.capacity == 3);
     assert(cache.empty());
     assert(cache.insert("foo", "foocontent"));
-    assert(cache.insert("bar", "barcontent"));
+    cache["bar"] = "barcontent";
     assert(cache.remove("bar"));
     assert(cache.insert("bar2", "bar2content"));
     assert(cache.insert("bar3", "bar3content"));
     assert(*cache.get("foo") == "foocontent");
     assert(cache.contains("foo"));
     assert(cache.get("bar") is null);
-    assert(*cache.get("bar2") == "bar2content");
-    assert(*cache.get("bar3") == "bar3content");
+    assertThrown(cache["bar"]);
+    assert(cache["bar2"] == "bar2content");
+    assert(*("bar3" in cache) == "bar3content");
     assert(cache.length == 3);
     cache.clear();
     assert(cache.length == 0);
@@ -450,19 +503,22 @@ unittest
 @("smoke test for shared")
 unittest
 {
+    import std.exception;
+
     auto cache = shared SieveCache!(string, string)(3);
     assert(cache.capacity == 3);
     assert(cache.empty());
     assert(cache.insert("foo", "foocontent"));
-    assert(cache.insert("bar", "barcontent"));
+    cache["bar"] = "barcontent";
     assert(cache.remove("bar"));
     assert(cache.insert("bar2", "bar2content"));
     assert(cache.insert("bar3", "bar3content"));
     assert(*cache.get("foo") == "foocontent");
     assert(cache.contains("foo"));
     assert(cache.get("bar") is null);
-    assert(*cache.get("bar2") == "bar2content");
-    assert(*cache.get("bar3") == "bar3content");
+    assertThrown(cache["bar"]);
+    assert(cache["bar2"] == "bar2content");
+    assert(*("bar3" in cache) == "bar3content");
     assert(cache.length == 3);
     cache.clear();
     assert(cache.length == 0);
@@ -473,11 +529,11 @@ unittest
 unittest
 {
     auto cache = SieveCache!(string, string)(2);
-    cache.insert("key1", "value1");
-    cache.insert("key2", "value2");
+    cache["key1"] = "value1";
+    cache["key2"] = "value2";
     // update key1 entry.
-    cache.insert("key1", "updated");
+    cache["key1"] = "updated";
     // add new entry
-    cache.insert("key3", "value3");
+    cache["key3"] = "value3";
     assert(cache.contains("key1"));
 }

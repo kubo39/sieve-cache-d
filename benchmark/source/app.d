@@ -19,7 +19,7 @@ void main()
         foreach (i; 1 .. 1000)
         {
             const n = i % 100;
-            cache.insert(n, n);
+            cache[n] = n;
         }
         foreach (i; 1 .. 1000)
         {
@@ -39,7 +39,7 @@ void main()
         foreach (_; 1 .. 1000)
         {
             const n = uniform(0, 100);
-            cache.insert(n, S(new ubyte[12], n));
+            cache[n] = S(new ubyte[12], n);
         }
         foreach (_; 1 .. 1000)
         {
@@ -60,7 +60,7 @@ void main()
         foreach (_; 1 .. 1000)
         {
             const n = uniform(0, 100);
-            cache.insert(n, S(new ubyte[12], n));
+            cache[n] = S(new ubyte[12], n);
         }
         foreach (_; 1 .. 1000)
         {
