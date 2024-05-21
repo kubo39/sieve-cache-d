@@ -1,6 +1,6 @@
-# SIEVE cache in D
+# SIEVE Cache in D
 
-An implementation of the [SIEVE][1] Cache algorithm for D.
+An implementation of the [SIEVE][1] Cache eviction algorithm for D.
 This implementation is fully inspired by [Rust's sieve-cache implementation][2].
 
 - [`code.dlang.org` page][3]
