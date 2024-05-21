@@ -384,15 +384,7 @@ private:
 
     void evict() @nogc nothrow pure
     {
-        Node!(K, V)* node = null;
-        if (hand_ !is null)
-        {
-            node = hand_;
-        }
-        else if (tail_ !is null)
-        {
-            node = tail_;
-        }
+        Node!(K, V)* node = hand_ !is null ? hand_ : tail_;
         while (node !is null)
         {
             if (!node.visited)
@@ -422,15 +414,7 @@ private:
 
     void evict() shared @nogc nothrow pure
     {
-        shared Node!(K, V)* node = null;
-        if (hand_ !is null)
-        {
-            node = hand_;
-        }
-        else if (tail_ !is null)
-        {
-            node = tail_;
-        }
+        shared Node!(K, V)* node = hand_ !is null ? hand_ : tail_;
         while (node !is null)
         {
             if (!node.visited)
