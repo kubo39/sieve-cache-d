@@ -1,4 +1,5 @@
 *.a
+*.lst
 *-test-library
 docs.json
 /docs/
