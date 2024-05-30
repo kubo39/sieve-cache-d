@@ -81,13 +81,13 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Supports $(B key in aa) syntax.
      */
-    scope V* opBinaryRight(string op)(K key) nothrow pure if (op == "in")
+    V* opBinaryRight(string op)(K key) nothrow pure if (op == "in")
     {
         return get(key);
     }
 
     /// Ditto.
-    scope shared(V)* opBinaryRight(string op)(K key) shared if (op == "in")
+    shared(V)* opBinaryRight(string op)(K key) shared if (op == "in")
     {
         return get(key);
     }
@@ -137,7 +137,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
      * by `key`.
      * If no value exists for `key`, returns `null`.
      */
-    scope V* get(K key) @nogc nothrow pure
+    V* get(K key) @nogc nothrow pure
     {
         Node!(K, V)** nodePtr = key in aa_;
         if (nodePtr is null)
@@ -149,7 +149,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    scope shared(V)* get(K key) shared @nogc nothrow
+    shared(V)* get(K key) shared @nogc nothrow
     {
         synchronized
         {
