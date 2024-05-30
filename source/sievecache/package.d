@@ -117,7 +117,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     {
         import std.conv : text;
 
-        const p = get(key);
+        auto p = get(key);
         enforce(p !is null, "'" ~ text(key) ~ "' not found in the cache.");
         return *p;
     }
@@ -127,7 +127,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     {
         import std.conv : text;
 
-        const p = get(key);
+        auto p = get(key);
         enforce(p !is null, "'" ~ text(key) ~ "' not found in the cache.");
         return *p;
     }
@@ -520,4 +520,13 @@ unittest
     // add new entry
     cache["key3"] = "value3";
     assert(cache.contains("key1"));
+}
+
+@("test get")
+unittest
+{
+    auto cache = SieveCache!(string, int)(1);
+    cache["key1"] = 0;
+    assert(++cache["key1"] == 1);
+    assert(cache["key1"] == 1);
 }
