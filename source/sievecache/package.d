@@ -223,7 +223,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             addNode(node);
             aa_[key] = node;
             assert(length_ < capacity_);
-            (cast() length_)++;
+            () @trusted { (cast() length_)++; }();
         }
         return true;
     }
@@ -269,7 +269,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
             }
             removeNode(node);
             assert(length_ > 0);
-            (cast() length_)--;
+            () @trusted { (cast() length_)--; }();
             return aa_.remove(key);
         }
     }
@@ -438,7 +438,7 @@ private:
             aa_.remove(node.key);
             removeNode(node);
             assert(length_ > 0);
-            (cast() length_)--;
+            () @trusted { (cast() length_)--; }();
         }
     }
 
