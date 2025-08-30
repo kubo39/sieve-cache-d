@@ -21,7 +21,7 @@ jobs:
     name: Run `dub lint`
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dlang-community/setup-dlang@v2
       - name: Run lint
         run: dub lint -q
@@ -33,7 +33,7 @@ jobs:
         dc: [dmd-latest, ldc-latest]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dlang-community/setup-dlang@v2
         with:
           compiler: ${{ matrix.dc }}
