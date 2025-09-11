@@ -530,3 +530,16 @@ unittest
     assert(++cache["key1"] == 1);
     assert(cache["key1"] == 1);
 }
+
+@("insert never exceeds capacity when all visited")
+unittest
+{
+    import std.exception : assertNotThrown;
+    auto cache = SieveCache!(string, int)(2);
+    cache["a"] = 1;
+    cache["b"] = 2;
+    assertNotThrown(cache["a"]);
+    assertNotThrown(cache["b"]);
+    cache["c"] = 3;
+    assert(cache.length <= cache.capacity);
+}
