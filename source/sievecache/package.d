@@ -8,8 +8,6 @@
  */
 module sievecache;
 
-@safe:
-
 private:
 
 import core.atomic : atomicLoad;
@@ -29,7 +27,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Create a new cache with given capacity.
      */
-    this(size_t capacity) pure
+    this(size_t capacity) pure @safe
     {
         enforce(capacity > 0, "capacity must be greater than zero.");
         capacity_ = capacity;
@@ -39,13 +37,13 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Returns the capacity of the cache.
      */
-    size_t capacity() const @nogc nothrow pure
+    size_t capacity() const @nogc nothrow pure @safe
     {
         return capacity_;
     }
 
     /// Ditto.
-    size_t capacity() shared const @nogc nothrow pure
+    size_t capacity() shared const @nogc nothrow pure @safe
     {
         return capacity_;
     }
@@ -53,13 +51,13 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Returns the length of the cache.
      */
-    size_t length() const @nogc nothrow pure
+    size_t length() const @nogc nothrow pure @safe
     {
         return length_;
     }
 
     /// Ditto.
-    size_t length() shared const @nogc nothrow pure
+    size_t length() shared const @nogc nothrow pure @safe
     {
         return length_.atomicLoad;
     }
@@ -67,13 +65,13 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Returns `true` when no value are currently cached.
      */
-    bool empty() const @nogc nothrow pure
+    bool empty() const @nogc nothrow pure @safe
     {
         return length_ == 0;
     }
 
     /// Ditto.
-    bool empty() shared const @nogc nothrow pure
+    bool empty() shared const @nogc nothrow pure @safe
     {
         return length_.atomicLoad == 0;
     }
@@ -81,13 +79,13 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Supports $(B key in aa) syntax.
      */
-    V* opBinaryRight(string op)(K key) nothrow pure if (op == "in")
+    V* opBinaryRight(string op)(K key) nothrow pure @safe if (op == "in")
     {
         return get(key);
     }
 
     /// Ditto.
-    shared(V)* opBinaryRight(string op)(K key) shared if (op == "in")
+    shared(V)* opBinaryRight(string op)(K key) shared @safe if (op == "in")
     {
         return get(key);
     }
@@ -96,24 +94,24 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
      * Returns `true` if there is a value in the cache mapped to
      * by `key`.
      */
-    bool contains(K key) const @nogc nothrow pure
+    bool contains(K key) const @nogc nothrow pure @safe
     {
         return (key in aa_) !is null;
     }
 
     /// Ditto.
-    bool contains(K key) shared const @nogc nothrow
+    bool contains(K key) shared const @nogc nothrow @trusted
     {
         synchronized
         {
-            return (key in aa_) !is null;
+            return (key in cast(Node!(K,V)*[K]) aa_) !is null;
         }
     }
 
     /**
      * Supports `aa[key]` syntax.
      */
-    ref opIndex(K key) pure
+    ref opIndex(K key) pure @safe
     {
         import std.conv : text;
 
@@ -123,7 +121,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    ref opIndex(K key) shared
+    ref opIndex(K key) shared @safe
     {
         import std.conv : text;
 
@@ -137,7 +135,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
      * by `key`.
      * If no value exists for `key`, returns `null`.
      */
-    V* get(K key) @nogc nothrow pure
+    V* get(K key) @nogc nothrow pure @safe
     {
         Node!(K, V)** nodePtr = key in aa_;
         if (nodePtr is null)
@@ -149,7 +147,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    shared(V)* get(K key) shared @nogc nothrow
+    shared(V)* get(K key) shared @nogc nothrow @trusted
     {
         synchronized
         {
@@ -166,13 +164,13 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Supports $(B aa[key] = value;) syntax.
      */
-    void opIndexAssign(V value, K key) nothrow pure
+    void opIndexAssign(V value, K key) nothrow pure @safe
     {
         insert(key, value);
     }
 
     /// Ditto.
-    void opIndexAssign(shared V value, K key) shared
+    void opIndexAssign(shared V value, K key) shared @safe
     {
         insert(key, value);
     }
@@ -182,7 +180,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
      * Returns `true` when this is a new entry, and `false` if an existing
      * entry was updated.
      */
-    bool insert(K key, V value) nothrow pure
+    bool insert(K key, V value) nothrow pure @safe
     {
         Node!(K, V)** nodePtr = key in aa_;
         if (nodePtr !is null)
@@ -204,7 +202,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    bool insert(K key, shared V value) shared
+    bool insert(K key, shared V value) shared @trusted
     {
         synchronized
         {
@@ -234,7 +232,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
      * does exist.
      * If `key` did not map to any value, then this returns `false`.
      */
-    bool remove(K key) @nogc nothrow pure
+    bool remove(K key) nothrow pure @safe
     {
         Node!(K, V)** nodePtr = key in aa_;
         if (nodePtr is null)
@@ -253,7 +251,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    bool remove(K key) shared @nogc nothrow
+    bool remove(K key) shared nothrow @trusted
     {
         synchronized
         {
@@ -277,7 +275,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     /**
      * Removes all remining keys and values from the cache.
      */
-    void clear() nothrow pure
+    void clear() nothrow pure @safe
     {
         aa_.clear;
         head_ = null;
@@ -287,7 +285,7 @@ struct SieveCache(K, V) if (isEqualityComparable!K && isKeyableType!K)
     }
 
     /// Ditto.
-    void clear() @trusted shared nothrow
+    void clear() shared nothrow @trusted
     {
         synchronized
         {
@@ -304,7 +302,7 @@ private:
 
     @disable this(this);
 
-    void addNode(Node!(K, V)* node) @nogc nothrow pure
+    void addNode(Node!(K, V)* node) @nogc nothrow pure @safe
     {
         node.next = head_;
         node.prev = null;
@@ -319,7 +317,7 @@ private:
         }
     }
 
-    void addNode(shared Node!(K, V)* node) shared @nogc nothrow pure
+    void addNode(shared Node!(K, V)* node) shared @nogc nothrow pure @safe
     {
         node.next = head_;
         node.prev = null;
@@ -334,7 +332,7 @@ private:
         }
     }
 
-    void removeNode(Node!(K, V)* node) @nogc nothrow pure
+    void removeNode(Node!(K, V)* node) @nogc nothrow pure @safe
     {
         if (node.prev !is null)
         {
@@ -358,7 +356,7 @@ private:
         assert(node !is hand_);
     }
 
-    void removeNode(shared Node!(K, V)* node) shared @nogc nothrow pure
+    void removeNode(shared Node!(K, V)* node) shared @nogc nothrow pure @safe
     {
         if (node.prev !is null)
         {
@@ -382,7 +380,7 @@ private:
         assert(node !is hand_);
     }
 
-    void evict() @nogc nothrow pure
+    void evict() nothrow pure @safe
     {
         Node!(K, V)* node = hand_ !is null ? hand_ : tail_;
         while (node !is null)
@@ -412,7 +410,7 @@ private:
         }
     }
 
-    void evict() shared @nogc nothrow pure
+    void evict() shared nothrow pure @trusted
     {
         shared Node!(K, V)* node = hand_ !is null ? hand_ : tail_;
         while (node !is null)
@@ -460,7 +458,7 @@ private:
 }
 
 @("smoke test")
-unittest
+@safe unittest
 {
     import std.exception;
 
@@ -485,7 +483,7 @@ unittest
 }
 
 @("smoke test for shared")
-unittest
+@safe unittest
 {
     import std.exception;
 
@@ -510,7 +508,7 @@ unittest
 }
 
 @("test for update visited flag")
-unittest
+@safe unittest
 {
     auto cache = SieveCache!(string, string)(2);
     cache["key1"] = "value1";
@@ -523,7 +521,7 @@ unittest
 }
 
 @("test get")
-unittest
+@safe unittest
 {
     auto cache = SieveCache!(string, int)(1);
     cache["key1"] = 0;
@@ -532,7 +530,7 @@ unittest
 }
 
 @("insert never exceeds capacity when all visited")
-unittest
+@safe unittest
 {
     import std.exception : assertNotThrown;
     auto cache = SieveCache!(string, int)(2);
